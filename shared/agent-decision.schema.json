@@ -3,15 +3,15 @@
   "$id": "https://first-village.dev/schema/agent-decision.json",
   "title": "First Village Agent Decision",
   "type": "object",
-  "required": ["action", "reason"],
+  "required": ["action", "target_id", "resource", "utterance", "reason", "blueprint"],
   "properties": {
     "action": {
-      "enum": ["explore", "gather", "hunt", "eat", "drink", "sleep", "rest", "talk", "teach", "heal", "experiment", "build", "vote"]
+      "enum": ["explore", "gather", "hunt", "eat", "drink", "sleep", "rest", "talk", "teach", "heal", "experiment", "craft", "build", "vote"]
     },
     "target_id": {"type": ["integer", "null"]},
     "resource": {"type": ["string", "null"]},
     "utterance": {"type": ["string", "null"], "maxLength": 400},
-    "reason": {"type": "string", "maxLength": 600},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 600},
     "blueprint": {
       "type": ["object", "null"],
       "properties": {
@@ -20,11 +20,15 @@
         "footprint": {
           "type": "object",
           "required": ["w", "h"],
-          "properties": {"w": {"type": "number", "minimum": 8, "maximum": 80}, "h": {"type": "number", "minimum": 8, "maximum": 80}},
+          "properties": {
+            "w": {"type": "number", "minimum": 8, "maximum": 80},
+            "h": {"type": "number", "minimum": 8, "maximum": 80}
+          },
           "additionalProperties": false
         },
         "materials": {
           "type": "object",
+          "required": ["wood", "stone", "thatch", "clay"],
           "properties": {
             "wood": {"type": "number", "minimum": 0, "maximum": 100},
             "stone": {"type": "number", "minimum": 0, "maximum": 100},
@@ -36,7 +40,9 @@
         "primitives": {
           "type": "array",
           "maxItems": 12,
-          "items": {"enum": ["walls", "roof", "posts", "hearth", "storage_bins", "drying_beams", "fence", "pit", "platform", "channel", "doorway", "work_surface"]}
+          "items": {
+            "enum": ["walls", "roof", "posts", "hearth", "storage_bins", "drying_beams", "fence", "pit", "platform", "channel", "doorway", "work_surface"]
+          }
         }
       },
       "required": ["name", "purpose", "footprint", "materials", "primitives"],
