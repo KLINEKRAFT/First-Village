@@ -44,7 +44,14 @@ public:
     UFUNCTION(BlueprintPure, Category="Environment")
     float GetTerrainZAtWorldXY(float WorldX, float WorldY) const;
 
+    UFUNCTION(BlueprintPure, Category="Environment")
+    float GetWorldExtent() const;
+
+    UFUNCTION(BlueprintPure, Category="Environment")
+    float GetRiverCenterX() const;
+
 protected:
+    virtual void BeginPlay() override;
     virtual void OnConstruction(const FTransform& Transform) override;
 
 private:
