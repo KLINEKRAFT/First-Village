@@ -113,11 +113,18 @@ void ACivResourceNode::RefreshVisual()
 void ACivResourceNode::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if (!Label || !Label->IsVisible()) return;
+    if (!Label) return;
+    if (ResourceType == ECivResourceType::Water)
+    {
+        Label->SetVisibility(false);
+        return;
+    }
 
     APawn* Observer = UGameplayStatics::GetPlayerPawn(this, 0);
     const float DistanceSq = Observer ? FVector::DistSquared(Observer->GetActorLocation(), GetActorLocation()) : 0.f;
-    Label->SetVisibility(!Observer || DistanceSq < FMath::Square(2200.f));
+    const bool bShow = !Observer || DistanceSq < FMath::Square(2200.f);
+    Label->SetVisibility(bShow);
+    if (!bShow) return;
 
     if (APlayerCameraManager* Camera = UGameplayStatics::GetPlayerCameraManager(this, 0))
     {
