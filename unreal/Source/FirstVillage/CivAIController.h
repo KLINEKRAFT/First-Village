@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "CivResourceNode.h"
 #include "CivAIController.generated.h"
 
-class ACivResourceNode;
 class ACivAgentCharacter;
 
 UCLASS()
@@ -34,6 +34,8 @@ private:
     float DecisionTimer = 0.f;
     bool bDecisionInFlight = false;
     FName ActiveAction = NAME_None;
+    float PendingHarvestAmount = 0.f;
+    ECivResourceType PendingHarvestType = ECivResourceType::Food;
 
     UPROPERTY()
     TObjectPtr<ACivResourceNode> ActiveResource;
@@ -47,6 +49,7 @@ private:
     void ExecuteDecisionJson(const FString& ResponseJson);
     void ExecuteBuildDecision(const TSharedPtr<class FJsonObject>& DecisionObject);
     ACivResourceNode* FindNearestResource(FName ResourceName) const;
+    void ReturnHarvestToSettlement();
 
     UFUNCTION()
     void HandleRemoteDecision(int32 AgentId, bool bSuccess, const FString& ResponseJson);
