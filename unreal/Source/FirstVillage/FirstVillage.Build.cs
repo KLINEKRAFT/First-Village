@@ -10,6 +10,7 @@ public class FirstVillage : ModuleRules
             "Core",
             "CoreUObject",
             "Engine",
+            "InputCore",
             "Json",
             "JsonUtilities",
             "AIModule",
