@@ -11,7 +11,7 @@ ACivProceduralBuilding::ACivProceduralBuilding()
 
     Blueprint.Name = TEXT("Hut");
     Blueprint.Purpose = TEXT("Housing");
-    Blueprint.Footprint = FVector2D(5.f, 4.f);
+    Blueprint.Footprint = FVector2D(8.f, 8.f);
     Blueprint.Primitives = { TEXT("walls"), TEXT("roof"), TEXT("posts"), TEXT("doorway") };
 }
 
@@ -63,8 +63,8 @@ void ACivProceduralBuilding::RebuildFromBlueprint()
     ClearGeneratedParts();
 
     // Blueprint footprint is expressed in logical meters. Unreal uses centimeters.
-    const float HalfX = FMath::Clamp(Blueprint.Footprint.X, 2.f, 80.f) * 50.f;
-    const float HalfY = FMath::Clamp(Blueprint.Footprint.Y, 2.f, 80.f) * 50.f;
+    const float HalfX = FMath::Clamp(Blueprint.Footprint.X, 8.f, 80.f) * 50.f;
+    const float HalfY = FMath::Clamp(Blueprint.Footprint.Y, 8.f, 80.f) * 50.f;
     const float WallT = 18.f;
     const float WallH = FMath::Clamp(220.f + FMath::Min(Blueprint.Footprint.X, Blueprint.Footprint.Y) * 8.f, 240.f, 420.f);
 
