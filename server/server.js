@@ -161,11 +161,20 @@ app.post('/api/blueprint/validate', (req, res) => {
 });
 
 app.post('/api/decide', async (req, res) => {
+  const agentId = req.body?.agent_id ?? '?';
+  const agentName = req.body?.identity?.name || `Agent ${agentId}`;
+  const provider = process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-6-astra') : 'local';
+  const started = Date.now();
+  console.log(`[decision] ${agentName} (#${agentId}) -> ${provider}`);
+
   try {
-    const result = await callAgentModel(req.body);
-    res.json(validateDecision(result));
+    const result = validateDecision(await callAgentModel(req.body));
+    const resource = result.resource ? ` ${result.resource}` : '';
+    console.log(`[decision] ${agentName}: ${result.action}${resource} (${Date.now() - started}ms)`);
+    res.json(result);
   } catch (error) {
     const status = error?.name === 'AbortError' ? 504 : 400;
+    console.error(`[decision] ${agentName}: ERROR ${error.message}`);
     res.status(status).json({ error: error.message });
   }
 });
@@ -181,6 +190,7 @@ if (require.main === module) {
     console.log(`Simulation: http://localhost:${port}/sim`);
     console.log(`Health:     http://localhost:${port}/health`);
     console.log(`Agent brain: ${process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-6-astra') : 'local fallback'}`);
+    console.log('Waiting for Unreal agent decisions...');
   });
 }
 
