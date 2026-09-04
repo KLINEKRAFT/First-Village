@@ -3,6 +3,7 @@
 #include "Components/DirectionalLightComponent.h"
 #include "Components/SkyLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
 #include "Materials/MaterialInterface.h"
 
 ACivRuntimeEnvironment::ACivRuntimeEnvironment()
@@ -20,12 +21,16 @@ ACivRuntimeEnvironment::ACivRuntimeEnvironment()
     Sun->SetIntensity(7.2f);
     Sun->SetUseTemperature(true);
     Sun->SetTemperature(5100.f);
-    Sun->ForwardShadingPriority = 1;
+    Sun->SetForwardShadingPriority(1);
+    Sun->SetAtmosphereSunLight(true);
 
     SkyLight = CreateDefaultSubobject<USkyLightComponent>(TEXT("SkyLight"));
     SkyLight->SetupAttachment(RootComponent);
     SkyLight->SetIntensity(0.85f);
     SkyLight->SetRealTimeCaptureEnabled(true);
+
+    SkyAtmosphere = CreateDefaultSubobject<USkyAtmosphereComponent>(TEXT("SkyAtmosphere"));
+    SkyAtmosphere->SetupAttachment(RootComponent);
 
     Fog = CreateDefaultSubobject<UExponentialHeightFogComponent>(TEXT("Fog"));
     Fog->SetupAttachment(RootComponent);
