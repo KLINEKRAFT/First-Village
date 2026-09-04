@@ -93,8 +93,21 @@ void ACivAgentCharacter::RefreshVisualIdentity()
             BodyVisual->SetMaterial(0, RoleMaterial);
             LeftLegVisual->SetMaterial(0, RoleMaterial);
             RightLegVisual->SetMaterial(0, RoleMaterial);
-            LeftArmVisual->SetMaterial(0, RoleMaterial);
-            RightArmVisual->SetMaterial(0, RoleMaterial);
+        }
+
+        const int32 ToneIndex = Mind ? FMath::Abs(Mind->AgentId) % 4 : 0;
+        const FLinearColor SkinTones[] = {
+            FLinearColor(0.58f, 0.37f, 0.23f, 1.f),
+            FLinearColor(0.48f, 0.29f, 0.17f, 1.f),
+            FLinearColor(0.68f, 0.46f, 0.29f, 1.f),
+            FLinearColor(0.39f, 0.23f, 0.14f, 1.f)
+        };
+        if (UMaterialInstanceDynamic* SkinMaterial = UMaterialInstanceDynamic::Create(BaseMaterial, this))
+        {
+            SkinMaterial->SetVectorParameterValue(TEXT("Color"), SkinTones[ToneIndex]);
+            HeadVisual->SetMaterial(0, SkinMaterial);
+            LeftArmVisual->SetMaterial(0, SkinMaterial);
+            RightArmVisual->SetMaterial(0, SkinMaterial);
         }
     }
 }
@@ -135,7 +148,9 @@ void ACivAgentCharacter::Tick(float DeltaSeconds)
             const FVector ToCamera = Camera->GetCameraLocation() - Nameplate->GetComponentLocation();
             Nameplate->SetWorldRotation(FRotator(0.f, ToCamera.Rotation().Yaw + 180.f, 0.f));
         }
-        Nameplate->SetVisibility(FVector::DistSquared(GetActorLocation(), UGameplayStatics::GetPlayerPawn(this, 0) ? UGameplayStatics::GetPlayerPawn(this, 0)->GetActorLocation() : GetActorLocation()) < FMath::Square(2600.f));
+        APawn* Observer = UGameplayStatics::GetPlayerPawn(this, 0);
+        const bool bNearObserver = !Observer || FVector::DistSquared(GetActorLocation(), Observer->GetActorLocation()) < FMath::Square(2600.f);
+        Nameplate->SetVisibility(bNearObserver || bObserverSelected);
     }
 
     if (Health <= 0.f)
