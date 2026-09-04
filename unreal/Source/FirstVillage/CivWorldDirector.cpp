@@ -24,6 +24,72 @@ void ACivWorldDirector::BeginPlay()
     }
 }
 
+void ACivWorldDirector::AddHarvest(ECivResourceType Type, float Amount)
+{
+    if (Amount <= 0.f) return;
+    switch (Type)
+    {
+        case ECivResourceType::Water: WaterStore += Amount; break;
+        case ECivResourceType::Food:
+        case ECivResourceType::Game: FoodStore += Amount; break;
+        case ECivResourceType::Wood: WoodStore += Amount; break;
+        case ECivResourceType::Stone: StoneStore += Amount; break;
+        case ECivResourceType::Clay: ClayStore += Amount; break;
+    }
+}
+
+float ACivWorldDirector::GetStoreAmount(FName Resource) const
+{
+    if (Resource == TEXT("food")) return FoodStore;
+    if (Resource == TEXT("water")) return WaterStore;
+    if (Resource == TEXT("wood")) return WoodStore;
+    if (Resource == TEXT("stone")) return StoneStore;
+    if (Resource == TEXT("clay")) return ClayStore;
+    if (Resource == TEXT("thatch")) return ThatchStore;
+    return 0.f;
+}
+
+void ACivWorldDirector::GetMaterialStores(TMap<FName, float>& OutStores) const
+{
+    OutStores.Reset();
+    OutStores.Add(TEXT("wood"), WoodStore);
+    OutStores.Add(TEXT("stone"), StoneStore);
+    OutStores.Add(TEXT("clay"), ClayStore);
+    OutStores.Add(TEXT("thatch"), ThatchStore);
+}
+
+bool ACivWorldDirector::ConsumeMaterials(const TMap<FName, float>& Costs)
+{
+    for (const TPair<FName, float>& Pair : Costs)
+    {
+        if (GetStoreAmount(Pair.Key) < Pair.Value)
+        {
+            return false;
+        }
+    }
+
+    for (const TPair<FName, float>& Pair : Costs)
+    {
+        if (Pair.Key == TEXT("wood")) WoodStore -= Pair.Value;
+        else if (Pair.Key == TEXT("stone")) StoneStore -= Pair.Value;
+        else if (Pair.Key == TEXT("clay")) ClayStore -= Pair.Value;
+        else if (Pair.Key == TEXT("thatch")) ThatchStore -= Pair.Value;
+    }
+    return true;
+}
+
+ACivAgentCharacter* ACivWorldDirector::FindAgentById(int32 AgentId) const
+{
+    for (ACivAgentCharacter* Agent : Agents)
+    {
+        if (Agent && Agent->Mind && Agent->Mind->AgentId == AgentId)
+        {
+            return Agent;
+        }
+    }
+    return nullptr;
+}
+
 FVector ACivWorldDirector::ProjectToGround(const FVector& DesiredLocation, float HeightOffset) const
 {
     if (UWorld* World = GetWorld())
