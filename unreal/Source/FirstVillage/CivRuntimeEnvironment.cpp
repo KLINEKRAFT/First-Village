@@ -44,19 +44,21 @@ float ACivRuntimeEnvironment::SampleHeight(float X, float Y) const
     const float NY = Y / Extent;
     const float Radius = FMath::Sqrt(NX * NX + NY * NY);
 
-    // Broad bowl: the settlement sits in a low central basin while hills rise toward the edges.
     const float Basin = FMath::Pow(FMath::Clamp(Radius, 0.f, 1.4f), 1.8f) * HeightScale;
-
-    // Low-frequency ridges keep the terrain organic while preserving a navigable valley floor.
     const float RidgeA = FMath::Sin(X * 0.00075f) * FMath::Cos(Y * 0.00055f) * HeightScale * 0.18f;
     const float RidgeB = FMath::Sin((X + Y) * 0.00038f) * HeightScale * 0.12f;
 
-    // A shallow river corridor runs along the western side of the basin.
     const float RiverCenterX = -Extent * 0.38f;
     const float RiverDistance = FMath::Abs(X - RiverCenterX);
     const float RiverCut = FMath::Exp(-FMath::Square(RiverDistance / 520.f)) * HeightScale * 0.22f;
 
     return Basin + RidgeA + RidgeB - RiverCut - 120.f;
+}
+
+float ACivRuntimeEnvironment::GetTerrainZAtWorldXY(float WorldX, float WorldY) const
+{
+    const FVector Origin = GetActorLocation();
+    return Origin.Z + SampleHeight(WorldX - Origin.X, WorldY - Origin.Y);
 }
 
 void ACivRuntimeEnvironment::GenerateValley()
@@ -74,11 +76,12 @@ void ACivRuntimeEnvironment::GenerateValley()
     TArray<FLinearColor> Colors;
     TArray<FProcMeshTangent> Tangents;
 
-    Vertices.Reserve((Resolution + 1) * (Resolution + 1));
-    Normals.Reserve(Vertices.Max());
-    UV0.Reserve(Vertices.Max());
-    Colors.Reserve(Vertices.Max());
-    Tangents.Reserve(Vertices.Max());
+    const int32 VertexCount = (Resolution + 1) * (Resolution + 1);
+    Vertices.Reserve(VertexCount);
+    Normals.Reserve(VertexCount);
+    UV0.Reserve(VertexCount);
+    Colors.Reserve(VertexCount);
+    Tangents.Reserve(VertexCount);
 
     for (int32 Y = 0; Y <= Resolution; ++Y)
     {
@@ -88,7 +91,12 @@ void ACivRuntimeEnvironment::GenerateValley()
             const float PY = -Half + Y * Step;
             const float Z = SampleHeight(PX, PY);
             Vertices.Add(FVector(PX, PY, Z));
-            Normals.Add(FVector::UpVector);
+
+            const float Epsilon = Step * 0.5f;
+            const float HX = SampleHeight(PX + Epsilon, PY) - SampleHeight(PX - Epsilon, PY);
+            const float HY = SampleHeight(PX, PY + Epsilon) - SampleHeight(PX, PY - Epsilon);
+            Normals.Add(FVector(-HX, -HY, Epsilon * 2.f).GetSafeNormal());
+
             UV0.Add(FVector2D(static_cast<float>(X) / Resolution, static_cast<float>(Y) / Resolution));
 
             const float Height01 = FMath::Clamp((Z + 200.f) / (HeightScale + 350.f), 0.f, 1.f);
