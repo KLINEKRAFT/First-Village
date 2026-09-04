@@ -3,6 +3,7 @@
 #include "CivRuntimeEnvironment.h"
 #include "CivWorldClock.h"
 #include "CivBiomeDresser.h"
+#include "CivObserverHUD.h"
 #include "GameFramework/DefaultPawn.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
@@ -10,6 +11,7 @@
 ACivVillageGameMode::ACivVillageGameMode()
 {
     DefaultPawnClass = ADefaultPawn::StaticClass();
+    HUDClass = ACivObserverHUD::StaticClass();
 }
 
 void ACivVillageGameMode::BeginPlay()
