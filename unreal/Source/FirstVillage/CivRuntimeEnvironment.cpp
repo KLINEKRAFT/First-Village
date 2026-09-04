@@ -11,7 +11,7 @@ ACivRuntimeEnvironment::ACivRuntimeEnvironment()
 
     Terrain = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Terrain"));
     RootComponent = Terrain;
-    Terrain->bUseAsyncCooking = true;
+    Terrain->bUseAsyncCooking = false;
     Terrain->SetCollisionProfileName(TEXT("BlockAll"));
 
     Sun = CreateDefaultSubobject<UDirectionalLightComponent>(TEXT("Sun"));
