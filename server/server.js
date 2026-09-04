@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 app.use(express.json({ limit: '256kb' }));
 
@@ -68,7 +69,17 @@ app.post('/api/decide', async (req, res) => {
   }
 });
 
-const port = process.env.PORT || 8787;
-app.listen(port, () => console.log(`First Village agent bridge listening on http://localhost:${port}`));
+const webRoot = path.resolve(__dirname, '..', 'web');
+app.use(express.static(webRoot));
+app.get('/sim', (_req, res) => res.sendFile(path.join(webRoot, 'index.html')));
 
-module.exports = { validateBlueprint, validateDecision };
+const port = process.env.PORT || 8787;
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`First Village running at http://localhost:${port}`);
+    console.log(`Simulation: http://localhost:${port}/sim`);
+    console.log(`Health:     http://localhost:${port}/health`);
+  });
+}
+
+module.exports = { app, validateBlueprint, validateDecision };
