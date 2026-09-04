@@ -18,11 +18,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent Brain")
     bool bUseRemoteAgent = true;
 
+    // Astra handles high-level intentions, not frame-by-frame locomotion.
+    // Keeping this interval broad also prevents a 12-person village from producing an unnecessary API burst.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent Brain")
-    float DecisionIntervalMin = 12.f;
+    float DecisionIntervalMin = 35.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent Brain")
-    float DecisionIntervalMax = 24.f;
+    float DecisionIntervalMax = 70.f;
 
 protected:
     virtual void BeginPlay() override;
