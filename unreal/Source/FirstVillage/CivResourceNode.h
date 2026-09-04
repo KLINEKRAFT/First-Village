@@ -37,4 +37,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Resource")
     float Harvest(float RequestedAmount);
+
+    UFUNCTION(BlueprintCallable, Category="Resource")
+    void RefreshVisual();
 };
