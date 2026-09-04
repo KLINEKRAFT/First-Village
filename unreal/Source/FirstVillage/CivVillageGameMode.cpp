@@ -1,6 +1,9 @@
 #include "CivVillageGameMode.h"
 #include "CivWorldDirector.h"
 #include "CivRuntimeEnvironment.h"
+#include "CivWorldClock.h"
+#include "CivBiomeDresser.h"
+#include "CivObserverHUD.h"
 #include "GameFramework/DefaultPawn.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
@@ -8,6 +11,7 @@
 ACivVillageGameMode::ACivVillageGameMode()
 {
     DefaultPawnClass = ADefaultPawn::StaticClass();
+    HUDClass = ACivObserverHUD::StaticClass();
 }
 
 void ACivVillageGameMode::BeginPlay()
@@ -23,6 +27,8 @@ void ACivVillageGameMode::SpawnRuntimeGround()
     if (UWorld* World = GetWorld())
     {
         World->SpawnActor<ACivRuntimeEnvironment>(FVector::ZeroVector, FRotator::ZeroRotator);
+        World->SpawnActor<ACivWorldClock>(FVector::ZeroVector, FRotator::ZeroRotator);
+        World->SpawnActor<ACivBiomeDresser>(FVector::ZeroVector, FRotator::ZeroRotator);
     }
 }
 
