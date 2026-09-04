@@ -41,6 +41,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="Environment")
     void GenerateValley();
 
+    UFUNCTION(BlueprintPure, Category="Environment")
+    float GetTerrainZAtWorldXY(float WorldX, float WorldY) const;
+
 protected:
     virtual void OnConstruction(const FTransform& Transform) override;
 
