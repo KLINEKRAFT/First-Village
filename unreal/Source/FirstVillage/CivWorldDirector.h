@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "CivResourceNode.h"
 #include "CivWorldDirector.generated.h"
 
 class ACivAgentCharacter;
-class ACivResourceNode;
 class ACivProceduralBuilding;
 
 UCLASS()
@@ -30,6 +30,38 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Simulation")
     TArray<TObjectPtr<ACivResourceNode>> Resources;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settlement|Stores")
+    float FoodStore = 13.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settlement|Stores")
+    float WaterStore = 15.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settlement|Stores")
+    float WoodStore = 8.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settlement|Stores")
+    float StoneStore = 2.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settlement|Stores")
+    float ClayStore = 0.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settlement|Stores")
+    float ThatchStore = 5.f;
+
+    UFUNCTION(BlueprintCallable, Category="Settlement")
+    void AddHarvest(ECivResourceType Type, float Amount);
+
+    UFUNCTION(BlueprintPure, Category="Settlement")
+    float GetStoreAmount(FName Resource) const;
+
+    UFUNCTION(BlueprintCallable, Category="Settlement")
+    bool ConsumeMaterials(const TMap<FName, float>& Costs);
+
+    UFUNCTION(BlueprintPure, Category="Settlement")
+    ACivAgentCharacter* FindAgentById(int32 AgentId) const;
+
+    void GetMaterialStores(TMap<FName, float>& OutStores) const;
 
 protected:
     virtual void BeginPlay() override;
