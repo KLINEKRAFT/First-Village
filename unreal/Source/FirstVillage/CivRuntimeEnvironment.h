@@ -8,6 +8,7 @@ class UProceduralMeshComponent;
 class UDirectionalLightComponent;
 class USkyLightComponent;
 class UExponentialHeightFogComponent;
+class USkyAtmosphereComponent;
 
 UCLASS()
 class FIRSTVILLAGE_API ACivRuntimeEnvironment : public AActor
@@ -29,6 +30,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Environment")
     TObjectPtr<UExponentialHeightFogComponent> Fog;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Environment")
+    TObjectPtr<USkyAtmosphereComponent> SkyAtmosphere;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Environment|Terrain")
     int32 GridResolution = 64;
 
@@ -44,7 +48,14 @@ public:
     UFUNCTION(BlueprintPure, Category="Environment")
     float GetTerrainZAtWorldXY(float WorldX, float WorldY) const;
 
+    UFUNCTION(BlueprintPure, Category="Environment")
+    float GetWorldExtent() const;
+
+    UFUNCTION(BlueprintPure, Category="Environment")
+    float GetRiverCenterX() const;
+
 protected:
+    virtual void BeginPlay() override;
     virtual void OnConstruction(const FTransform& Transform) override;
 
 private:

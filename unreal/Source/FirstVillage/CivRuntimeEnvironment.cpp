@@ -3,6 +3,8 @@
 #include "Components/DirectionalLightComponent.h"
 #include "Components/SkyLightComponent.h"
 #include "Components/ExponentialHeightFogComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
+#include "Materials/MaterialInterface.h"
 
 ACivRuntimeEnvironment::ACivRuntimeEnvironment()
 {
@@ -10,25 +12,36 @@ ACivRuntimeEnvironment::ACivRuntimeEnvironment()
 
     Terrain = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Terrain"));
     RootComponent = Terrain;
-    Terrain->bUseAsyncCooking = true;
+    Terrain->bUseAsyncCooking = false;
     Terrain->SetCollisionProfileName(TEXT("BlockAll"));
 
     Sun = CreateDefaultSubobject<UDirectionalLightComponent>(TEXT("Sun"));
     Sun->SetupAttachment(RootComponent);
     Sun->SetRelativeRotation(FRotator(-48.f, -32.f, 0.f));
-    Sun->SetIntensity(8.5f);
+    Sun->SetIntensity(7.2f);
     Sun->SetUseTemperature(true);
-    Sun->SetTemperature(5400.f);
+    Sun->SetTemperature(5100.f);
+    Sun->SetForwardShadingPriority(1);
+    Sun->SetAtmosphereSunLight(true);
 
     SkyLight = CreateDefaultSubobject<USkyLightComponent>(TEXT("SkyLight"));
     SkyLight->SetupAttachment(RootComponent);
-    SkyLight->SetIntensity(1.0f);
+    SkyLight->SetIntensity(0.85f);
     SkyLight->SetRealTimeCaptureEnabled(true);
+
+    SkyAtmosphere = CreateDefaultSubobject<USkyAtmosphereComponent>(TEXT("SkyAtmosphere"));
+    SkyAtmosphere->SetupAttachment(RootComponent);
 
     Fog = CreateDefaultSubobject<UExponentialHeightFogComponent>(TEXT("Fog"));
     Fog->SetupAttachment(RootComponent);
-    Fog->FogDensity = 0.008f;
-    Fog->FogHeightFalloff = 0.2f;
+    Fog->FogDensity = 0.0045f;
+    Fog->FogHeightFalloff = 0.18f;
+}
+
+void ACivRuntimeEnvironment::BeginPlay()
+{
+    Super::BeginPlay();
+    GenerateValley();
 }
 
 void ACivRuntimeEnvironment::OnConstruction(const FTransform& Transform)
@@ -37,9 +50,19 @@ void ACivRuntimeEnvironment::OnConstruction(const FTransform& Transform)
     GenerateValley();
 }
 
+float ACivRuntimeEnvironment::GetWorldExtent() const
+{
+    return FMath::Max(1.f, GridResolution * CellSize * 0.5f);
+}
+
+float ACivRuntimeEnvironment::GetRiverCenterX() const
+{
+    return GetActorLocation().X - GetWorldExtent() * 0.38f;
+}
+
 float ACivRuntimeEnvironment::SampleHeight(float X, float Y) const
 {
-    const float Extent = FMath::Max(1.f, GridResolution * CellSize * 0.5f);
+    const float Extent = GetWorldExtent();
     const float NX = X / Extent;
     const float NY = Y / Extent;
     const float Radius = FMath::Sqrt(NX * NX + NY * NY);
@@ -68,6 +91,7 @@ void ACivRuntimeEnvironment::GenerateValley()
     const int32 Resolution = FMath::Clamp(GridResolution, 8, 160);
     const float Step = FMath::Max(CellSize, 50.f);
     const float Half = Resolution * Step * 0.5f;
+    const float LocalRiverX = -GetWorldExtent() * 0.38f;
 
     TArray<FVector> Vertices;
     TArray<int32> Triangles;
@@ -95,12 +119,21 @@ void ACivRuntimeEnvironment::GenerateValley()
             const float Epsilon = Step * 0.5f;
             const float HX = SampleHeight(PX + Epsilon, PY) - SampleHeight(PX - Epsilon, PY);
             const float HY = SampleHeight(PX, PY + Epsilon) - SampleHeight(PX, PY - Epsilon);
-            Normals.Add(FVector(-HX, -HY, Epsilon * 2.f).GetSafeNormal());
+            const FVector Normal = FVector(-HX, -HY, Epsilon * 2.f).GetSafeNormal();
+            Normals.Add(Normal);
 
             UV0.Add(FVector2D(static_cast<float>(X) / Resolution, static_cast<float>(Y) / Resolution));
 
-            const float Height01 = FMath::Clamp((Z + 200.f) / (HeightScale + 350.f), 0.f, 1.f);
-            Colors.Add(FLinearColor(0.18f + Height01 * 0.12f, 0.28f + Height01 * 0.12f, 0.12f + Height01 * 0.06f, 1.f));
+            const float Height01 = FMath::Clamp((Z + 180.f) / (HeightScale + 300.f), 0.f, 1.f);
+            const float River01 = 1.f - FMath::Clamp(FMath::Abs(PX - LocalRiverX) / 650.f, 0.f, 1.f);
+            const float Slope = 1.f - FMath::Clamp(Normal.Z, 0.f, 1.f);
+            const float CenterClearing = 1.f - FMath::Clamp(FVector2D(PX, PY).Size() / 1450.f, 0.f, 1.f);
+
+            FLinearColor Ground = FLinearColor(0.19f, 0.27f, 0.12f, 1.f);
+            Ground = FMath::Lerp(Ground, FLinearColor(0.31f, 0.28f, 0.16f, 1.f), CenterClearing * 0.55f);
+            Ground = FMath::Lerp(Ground, FLinearColor(0.18f, 0.24f, 0.12f, 1.f), River01 * 0.75f);
+            Ground = FMath::Lerp(Ground, FLinearColor(0.30f, 0.30f, 0.26f, 1.f), FMath::Clamp(Slope * 1.6f + Height01 * 0.35f, 0.f, 0.85f));
+            Colors.Add(Ground);
             Tangents.Add(FProcMeshTangent(1.f, 0.f, 0.f));
         }
     }
@@ -121,4 +154,9 @@ void ACivRuntimeEnvironment::GenerateValley()
 
     Terrain->ClearAllMeshSections();
     Terrain->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, Colors, Tangents, true, false);
+
+    if (UMaterialInterface* VertexColorMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/EngineDebugMaterials/VertexColorMaterial.VertexColorMaterial")))
+    {
+        Terrain->SetMaterial(0, VertexColorMaterial);
+    }
 }

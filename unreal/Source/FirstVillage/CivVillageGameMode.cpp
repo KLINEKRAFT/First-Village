@@ -4,32 +4,51 @@
 #include "CivWorldClock.h"
 #include "CivBiomeDresser.h"
 #include "CivObserverHUD.h"
-#include "GameFramework/DefaultPawn.h"
-#include "GameFramework/PlayerController.h"
+#include "CivObserverPawn.h"
+#include "CivRiverActor.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
+#include "Engine/DirectionalLight.h"
+#include "Engine/SkyLight.h"
+#include "Engine/ExponentialHeightFog.h"
+#include "Components/SkyAtmosphereComponent.h"
+#include "Kismet/GameplayStatics.h"
+
+namespace
+{
+void DestroyActorsOfClass(UWorld* World, UClass* ActorClass)
+{
+    if (!World || !ActorClass) return;
+    TArray<AActor*> Actors;
+    UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
+    for (AActor* Actor : Actors)
+    {
+        if (IsValid(Actor)) Actor->Destroy();
+    }
+}
+
+void RemoveTemplateEnvironment(UWorld* World)
+{
+    DestroyActorsOfClass(World, ADirectionalLight::StaticClass());
+    DestroyActorsOfClass(World, ASkyLight::StaticClass());
+    DestroyActorsOfClass(World, AExponentialHeightFog::StaticClass());
+    DestroyActorsOfClass(World, ASkyAtmosphere::StaticClass());
+}
+}
 
 ACivVillageGameMode::ACivVillageGameMode()
 {
-    DefaultPawnClass = ADefaultPawn::StaticClass();
+    DefaultPawnClass = ACivObserverPawn::StaticClass();
     HUDClass = ACivObserverHUD::StaticClass();
 }
 
 void ACivVillageGameMode::BeginPlay()
 {
     Super::BeginPlay();
+    RemoveTemplateEnvironment(GetWorld());
     SpawnRuntimeGround();
     SpawnNavigationBounds();
     SpawnWorldDirector();
-
-    if (APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr)
-    {
-        if (APawn* Observer = PC->GetPawn())
-        {
-            Observer->SetActorLocation(FVector(0.f, -2800.f, 1700.f), false, nullptr, ETeleportType::TeleportPhysics);
-            Observer->SetActorRotation(FRotator(-24.f, 0.f, 0.f));
-        }
-    }
 }
 
 void ACivVillageGameMode::SpawnRuntimeGround()
@@ -39,6 +58,7 @@ void ACivVillageGameMode::SpawnRuntimeGround()
         World->SpawnActor<ACivRuntimeEnvironment>(FVector::ZeroVector, FRotator::ZeroRotator);
         World->SpawnActor<ACivWorldClock>(FVector::ZeroVector, FRotator::ZeroRotator);
         World->SpawnActor<ACivBiomeDresser>(FVector::ZeroVector, FRotator::ZeroRotator);
+        World->SpawnActor<ACivRiverActor>(FVector::ZeroVector, FRotator::ZeroRotator);
     }
 }
 
@@ -47,13 +67,14 @@ void ACivVillageGameMode::SpawnNavigationBounds()
     UWorld* World = GetWorld();
     if (!World) return;
 
-    ANavMeshBoundsVolume* NavBounds = World->SpawnActor<ANavMeshBoundsVolume>(FVector(0.f, 0.f, 700.f), FRotator::ZeroRotator);
+    ANavMeshBoundsVolume* NavBounds = World->SpawnActor<ANavMeshBoundsVolume>(FVector(0.f, 0.f, 550.f), FRotator::ZeroRotator);
     if (!NavBounds) return;
 
-    NavBounds->SetActorScale3D(FVector(42.f, 42.f, 14.f));
+    NavBounds->SetActorScale3D(FVector(48.f, 48.f, 12.f));
     if (UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World))
     {
         Nav->OnNavigationBoundsUpdated(NavBounds);
+        Nav->Build();
     }
 }
 

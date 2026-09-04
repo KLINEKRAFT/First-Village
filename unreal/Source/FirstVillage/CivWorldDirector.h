@@ -70,5 +70,6 @@ private:
     void SpawnInitialPopulation();
     void SpawnResourceRing();
     void SpawnDemoStructures();
+    void SpawnVillageLandmarks();
     FVector ProjectToGround(const FVector& DesiredLocation, float HeightOffset = 0.f) const;
 };
