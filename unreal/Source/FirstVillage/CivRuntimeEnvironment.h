@@ -8,6 +8,7 @@ class UProceduralMeshComponent;
 class UDirectionalLightComponent;
 class USkyLightComponent;
 class UExponentialHeightFogComponent;
+class USkyAtmosphereComponent;
 
 UCLASS()
 class FIRSTVILLAGE_API ACivRuntimeEnvironment : public AActor
@@ -28,6 +29,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Environment")
     TObjectPtr<UExponentialHeightFogComponent> Fog;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Environment")
+    TObjectPtr<USkyAtmosphereComponent> SkyAtmosphere;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Environment|Terrain")
     int32 GridResolution = 64;
