@@ -49,6 +49,7 @@ void ACivWorldDirector::BeginPlay()
     Super::BeginPlay();
     RecordHistory(GetWorld(), TEXT("founding"), TEXT("Twelve people entered the valley and established the first camp."), GetActorLocation());
     SpawnInitialPopulation();
+    UE_LOG(LogTemp, Display, TEXT("First Village population spawned: %d/%d"), Agents.Num(), InitialPopulation);
     SpawnResourceRing();
     if (bGenerateDemoVillage)
     {
@@ -139,19 +140,32 @@ void ACivWorldDirector::SpawnInitialPopulation()
     static const TCHAR* Names[] = { TEXT("Mara"),TEXT("Eli"),TEXT("June"),TEXT("Caleb"),TEXT("Nora"),TEXT("Theo"),TEXT("Iris"),TEXT("Jonah"),TEXT("Mae"),TEXT("Rowan"),TEXT("Ada"),TEXT("Silas") };
     static const FName Roles[] = { TEXT("Forager"),TEXT("Maker"),TEXT("Healer"),TEXT("Scout"),TEXT("Cook"),TEXT("Gatherer"),TEXT("Farmer"),TEXT("Builder"),TEXT("Healer"),TEXT("Hunter"),TEXT("Maker"),TEXT("Organizer") };
     static const FName Traits[] = { TEXT("cooperative"),TEXT("cautious"),TEXT("empathetic"),TEXT("bold"),TEXT("practical"),TEXT("curious"),TEXT("stubborn"),TEXT("calm"),TEXT("social"),TEXT("competitive"),TEXT("inventive"),TEXT("organized") };
+
+    FActorSpawnParameters AgentSpawnParams;
+    AgentSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    FActorSpawnParameters ControllerSpawnParams;
+    ControllerSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
     for (int32 i=0;i<InitialPopulation;++i)
     {
         const float Angle=(2.f*PI*i)/FMath::Max(1,InitialPopulation);
-        FVector Location=ProjectToGround(GetActorLocation()+FVector(FMath::Cos(Angle)*SpawnRadius*.35f,FMath::Sin(Angle)*SpawnRadius*.35f,0.f),105.f);
-        ACivAgentCharacter* Agent=World->SpawnActor<ACivAgentCharacter>(Location,FRotator::ZeroRotator);
-        if(!Agent) continue;
+        FVector Location=ProjectToGround(GetActorLocation()+FVector(FMath::Cos(Angle)*SpawnRadius*.35f,FMath::Sin(Angle)*SpawnRadius*.35f,0.f),125.f);
+        ACivAgentCharacter* Agent=World->SpawnActor<ACivAgentCharacter>(ACivAgentCharacter::StaticClass(), Location, FRotator::ZeroRotator, AgentSpawnParams);
+        if(!Agent)
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to spawn First Village agent %d at %s"), i, *Location.ToString());
+            continue;
+        }
         if(Agent->Mind)
         {
             Agent->Mind->AgentId=i; Agent->Mind->DisplayName=Names[i%UE_ARRAY_COUNT(Names)]; Agent->Mind->Role=Roles[i%UE_ARRAY_COUNT(Roles)]; Agent->Mind->Trait=Traits[i%UE_ARRAY_COUNT(Traits)];
             Agent->Mind->PrivateGoal=TEXT("Help the group survive and make a lasting home in the valley.");
             FCivMemory M; M.Text=TEXT("We entered this valley together with little more than what we could carry."); M.Source=TEXT("firsthand"); M.Confidence=1.f; M.DayCreated=1; M.bFirsthand=true; Agent->Mind->AddMemory(M);
         }
-        ACivAIController* Controller=World->SpawnActor<ACivAIController>(Agent->GetActorLocation(),FRotator::ZeroRotator); if(Controller) Controller->Possess(Agent); Agents.Add(Agent);
+        ACivAIController* Controller=World->SpawnActor<ACivAIController>(ACivAIController::StaticClass(), Agent->GetActorLocation(), FRotator::ZeroRotator, ControllerSpawnParams);
+        if(Controller) Controller->Possess(Agent);
+        else UE_LOG(LogTemp, Warning, TEXT("Agent %d spawned but AI controller did not."), i);
+        Agents.Add(Agent);
     }
 }
 
