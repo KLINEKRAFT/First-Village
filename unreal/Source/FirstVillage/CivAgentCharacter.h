@@ -5,6 +5,7 @@
 #include "CivAgentCharacter.generated.h"
 
 class UCivAgentMindComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class FIRSTVILLAGE_API ACivAgentCharacter : public ACharacter
@@ -16,6 +17,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Agent")
     TObjectPtr<UCivAgentMindComponent> Mind;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Agent|Visual")
+    TObjectPtr<UStaticMeshComponent> BodyVisual;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent|Needs")
     float Hunger = 10.f;
