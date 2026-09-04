@@ -4,7 +4,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "CivAgentApiSubsystem.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCivAgentDecision, bool, bSuccess, const FString&, ResponseJson);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCivAgentDecision, int32, AgentId, bool, bSuccess, const FString&, ResponseJson);
 
 UCLASS()
 class FIRSTVILLAGE_API UCivAgentApiSubsystem : public UGameInstanceSubsystem
@@ -19,5 +19,5 @@ public:
     FOnCivAgentDecision OnDecisionReceived;
 
     UFUNCTION(BlueprintCallable, Category="Agent API")
-    void RequestDecision(const FString& ObservationJson);
+    void RequestDecision(int32 AgentId, const FString& ObservationJson);
 };
