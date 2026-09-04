@@ -8,6 +8,33 @@
 #include "CivRiverActor.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
+#include "Engine/DirectionalLight.h"
+#include "Engine/SkyLight.h"
+#include "Engine/ExponentialHeightFog.h"
+#include "Components/SkyAtmosphereComponent.h"
+#include "Kismet/GameplayStatics.h"
+
+namespace
+{
+void DestroyActorsOfClass(UWorld* World, UClass* ActorClass)
+{
+    if (!World || !ActorClass) return;
+    TArray<AActor*> Actors;
+    UGameplayStatics::GetAllActorsOfClass(World, ActorClass, Actors);
+    for (AActor* Actor : Actors)
+    {
+        if (IsValid(Actor)) Actor->Destroy();
+    }
+}
+
+void RemoveTemplateEnvironment(UWorld* World)
+{
+    DestroyActorsOfClass(World, ADirectionalLight::StaticClass());
+    DestroyActorsOfClass(World, ASkyLight::StaticClass());
+    DestroyActorsOfClass(World, AExponentialHeightFog::StaticClass());
+    DestroyActorsOfClass(World, ASkyAtmosphere::StaticClass());
+}
+}
 
 ACivVillageGameMode::ACivVillageGameMode()
 {
@@ -18,6 +45,7 @@ ACivVillageGameMode::ACivVillageGameMode()
 void ACivVillageGameMode::BeginPlay()
 {
     Super::BeginPlay();
+    RemoveTemplateEnvironment(GetWorld());
     SpawnRuntimeGround();
     SpawnNavigationBounds();
     SpawnWorldDirector();
