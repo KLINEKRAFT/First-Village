@@ -1,0 +1,24 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# Unreal Engine generated artifacts
+unreal/Binaries/
+unreal/DerivedDataCache/
+unreal/Intermediate/
+unreal/Saved/
+unreal/.vs/
+unreal/*.sln
+unreal/*.xcworkspace
+unreal/*.xcodeproj
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

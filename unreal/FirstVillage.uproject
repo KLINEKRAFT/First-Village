@@ -1,0 +1,16 @@
+{
+  "FileVersion": 3,
+  "Category": "Simulation",
+  "Description": "Autonomous ancient-civilization simulation",
+  "Modules": [
+    {
+      "Name": "FirstVillage",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ],
+  "Plugins": [
+    { "Name": "ModelingToolsEditorMode", "Enabled": true, "TargetAllowList": ["Editor"] },
+    { "Name": "ProceduralMeshComponent", "Enabled": true }
+  ]
+}

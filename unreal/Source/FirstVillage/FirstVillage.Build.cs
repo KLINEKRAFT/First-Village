@@ -13,7 +13,9 @@ public class FirstVillage : ModuleRules
             "Json",
             "JsonUtilities",
             "AIModule",
-            "NavigationSystem"
+            "NavigationSystem",
+            "HTTP",
+            "ProceduralMeshComponent"
         });
     }
 }
