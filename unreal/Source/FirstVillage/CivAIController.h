@@ -44,8 +44,6 @@ private:
     TObjectPtr<ACivAgentCharacter> ActiveOtherAgent;
 
     void ChooseLocalMovementGoal();
-    void ExecuteLocalSurvivalDecision();
-    bool StartResourceAction(FName Action, FName Resource);
     void RequestRemoteDecision();
     FString BuildObservationJson() const;
     void ExecuteDecisionJson(const FString& ResponseJson);
