@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const agentDecisionSchema = require('../shared/agent-decision.schema.json');
+
 const app = express();
 app.use(express.json({ limit: '256kb' }));
 
@@ -10,6 +12,13 @@ const ALLOWED_PRIMITIVES = new Set([
   'walls','roof','posts','hearth','storage_bins','drying_beams','fence','pit','platform','channel','doorway','work_surface'
 ]);
 const ALLOWED_MATERIALS = new Set(['wood','stone','thatch','clay']);
+
+const {
+  $schema: _schemaUrl,
+  $id: _schemaId,
+  title: _schemaTitle,
+  ...modelDecisionSchema
+} = agentDecisionSchema;
 
 function finiteInRange(value, min, max) {
   return Number.isFinite(value) && value >= min && value <= max;
@@ -42,30 +51,122 @@ function validateDecision(x) {
   return x;
 }
 
-async function callAgentModel(observation) {
-  /*
-   * Provider adapter belongs here.
-   * The model must receive ONLY the observation available to this specific person.
-   * Require JSON output matching shared/agent-decision.schema.json.
-   * Keep all provider credentials server-side.
-   */
-  const lowWater = observation?.settlement?.water < 8;
-  return lowWater
-    ? { action: 'gather', resource: 'water', reason: 'The communal water supply is critically low.' }
-    : { action: 'explore', reason: 'No external Astra/model provider is configured, so the safe fallback is exploration.' };
+function localFallbackDecision(observation) {
+  const lowWater = Number(observation?.settlement?.water) < 8;
+  const lowFood = Number(observation?.settlement?.food) < 8;
+  if (lowWater) {
+    return {
+      action: 'gather', target_id: null, resource: 'water', utterance: null,
+      reason: 'The communal water supply is critically low.', blueprint: null
+    };
+  }
+  if (lowFood) {
+    return {
+      action: 'gather', target_id: null, resource: 'food', utterance: null,
+      reason: 'The communal food supply is critically low.', blueprint: null
+    };
+  }
+  return {
+    action: 'explore', target_id: null, resource: null, utterance: null,
+    reason: 'No external model is configured, so exploration is the safest useful fallback.', blueprint: null
+  };
 }
 
-app.get('/health', (_req, res) => res.json({ ok: true, project: 'first-village', schema: 1 }));
+function extractResponseText(responseBody) {
+  if (typeof responseBody?.output_text === 'string' && responseBody.output_text.trim()) {
+    return responseBody.output_text;
+  }
+  for (const item of responseBody?.output || []) {
+    for (const content of item?.content || []) {
+      if (content?.type === 'output_text' && typeof content.text === 'string') {
+        return content.text;
+      }
+    }
+  }
+  return '';
+}
+
+async function callAstra(observation) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return localFallbackDecision(observation);
+
+  const model = process.env.OPENAI_MODEL || 'gpt-6-astra';
+  const reasoningEffort = process.env.OPENAI_REASONING_EFFORT || 'low';
+
+  const payload = {
+    model,
+    reasoning: { effort: reasoningEffort },
+    store: false,
+    instructions: [
+      'You are one prehistoric human living inside the First Village simulation.',
+      'Choose one immediate intention using only facts present in this private observation.',
+      'You are not omniscient. Do not invent unseen resources, other people\'s private thoughts, or technologies the observation says you do not know.',
+      'Prioritize survival, then relationships, useful experimentation, culture, and long-term settlement growth.',
+      'A build action may creatively propose a structure, but use only the allowed blueprint primitives/materials and keep it plausible for an ancient village.',
+      'The reason field is a short private rationale, not hidden chain-of-thought.'
+    ].join(' '),
+    input: JSON.stringify(observation),
+    text: {
+      format: {
+        type: 'json_schema',
+        name: 'first_village_agent_decision',
+        strict: true,
+        schema: modelDecisionSchema
+      }
+    }
+  };
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(process.env.OPENAI_TIMEOUT_MS || 45000));
+  try {
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = body?.error?.message || `OpenAI request failed with ${response.status}`;
+      throw new Error(message);
+    }
+
+    const text = extractResponseText(body);
+    if (!text) throw new Error('Astra returned no structured decision text');
+    return JSON.parse(text);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function callAgentModel(observation) {
+  return callAstra(observation);
+}
+
+app.get('/health', (_req, res) => res.json({
+  ok: true,
+  project: 'first-village',
+  schema: 2,
+  agent_provider: process.env.OPENAI_API_KEY ? 'openai' : 'local-fallback',
+  model: process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-6-astra') : null
+}));
+
 app.post('/api/blueprint/validate', (req, res) => {
   try { res.json({ ok: true, blueprint: validateBlueprint(req.body) }); }
   catch (error) { res.status(400).json({ ok: false, error: error.message }); }
 });
+
 app.post('/api/decide', async (req, res) => {
   try {
     const result = await callAgentModel(req.body);
     res.json(validateDecision(result));
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    const status = error?.name === 'AbortError' ? 504 : 400;
+    res.status(status).json({ error: error.message });
   }
 });
 
@@ -79,7 +180,14 @@ if (require.main === module) {
     console.log(`First Village running at http://localhost:${port}`);
     console.log(`Simulation: http://localhost:${port}/sim`);
     console.log(`Health:     http://localhost:${port}/health`);
+    console.log(`Agent brain: ${process.env.OPENAI_API_KEY ? (process.env.OPENAI_MODEL || 'gpt-6-astra') : 'local fallback'}`);
   });
 }
 
-module.exports = { app, validateBlueprint, validateDecision };
+module.exports = {
+  app,
+  validateBlueprint,
+  validateDecision,
+  localFallbackDecision,
+  extractResponseText
+};
