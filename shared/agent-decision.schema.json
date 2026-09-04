@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://first-village.dev/schema/agent-decision.json",
+  "title": "First Village Agent Decision",
+  "type": "object",
+  "required": ["action", "reason"],
+  "properties": {
+    "action": {
+      "enum": ["explore", "gather", "hunt", "eat", "drink", "sleep", "rest", "talk", "teach", "heal", "experiment", "build", "vote"]
+    },
+    "target_id": {"type": ["integer", "null"]},
+    "resource": {"type": ["string", "null"]},
+    "utterance": {"type": ["string", "null"], "maxLength": 400},
+    "reason": {"type": "string", "maxLength": 600},
+    "blueprint": {
+      "type": ["object", "null"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 60},
+        "purpose": {"type": "string", "minLength": 1, "maxLength": 180},
+        "footprint": {
+          "type": "object",
+          "required": ["w", "h"],
+          "properties": {"w": {"type": "number", "minimum": 8, "maximum": 80}, "h": {"type": "number", "minimum": 8, "maximum": 80}},
+          "additionalProperties": false
+        },
+        "materials": {
+          "type": "object",
+          "properties": {
+            "wood": {"type": "number", "minimum": 0, "maximum": 100},
+            "stone": {"type": "number", "minimum": 0, "maximum": 100},
+            "thatch": {"type": "number", "minimum": 0, "maximum": 100},
+            "clay": {"type": "number", "minimum": 0, "maximum": 100}
+          },
+          "additionalProperties": false
+        },
+        "primitives": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {"enum": ["walls", "roof", "posts", "hearth", "storage_bins", "drying_beams", "fence", "pit", "platform", "channel", "doorway", "work_surface"]}
+        }
+      },
+      "required": ["name", "purpose", "footprint", "materials", "primitives"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
