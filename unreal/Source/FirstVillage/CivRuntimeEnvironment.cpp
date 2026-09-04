@@ -16,14 +16,14 @@ ACivRuntimeEnvironment::ACivRuntimeEnvironment()
     Sun = CreateDefaultSubobject<UDirectionalLightComponent>(TEXT("Sun"));
     Sun->SetupAttachment(RootComponent);
     Sun->SetRelativeRotation(FRotator(-48.f, -32.f, 0.f));
-    Sun->Intensity = 8.5f;
-    Sun->bUseTemperature = true;
-    Sun->Temperature = 5400.f;
+    Sun->SetIntensity(8.5f);
+    Sun->SetUseTemperature(true);
+    Sun->SetTemperature(5400.f);
 
     SkyLight = CreateDefaultSubobject<USkyLightComponent>(TEXT("SkyLight"));
     SkyLight->SetupAttachment(RootComponent);
-    SkyLight->Intensity = 1.0f;
-    SkyLight->bRealTimeCapture = true;
+    SkyLight->SetIntensity(1.0f);
+    SkyLight->SetRealTimeCaptureEnabled(true);
 
     Fog = CreateDefaultSubobject<UExponentialHeightFogComponent>(TEXT("Fog"));
     Fog->SetupAttachment(RootComponent);
@@ -120,5 +120,5 @@ void ACivRuntimeEnvironment::GenerateValley()
     }
 
     Terrain->ClearAllMeshSections();
-    Terrain->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, Colors, Tangents, true);
+    Terrain->CreateMeshSection_LinearColor(0, Vertices, Triangles, Normals, UV0, Colors, Tangents, true, false);
 }
