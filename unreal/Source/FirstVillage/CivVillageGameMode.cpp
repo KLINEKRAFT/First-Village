@@ -5,6 +5,7 @@
 #include "CivBiomeDresser.h"
 #include "CivObserverHUD.h"
 #include "GameFramework/DefaultPawn.h"
+#include "GameFramework/PlayerController.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "NavigationSystem.h"
 
@@ -20,6 +21,15 @@ void ACivVillageGameMode::BeginPlay()
     SpawnRuntimeGround();
     SpawnNavigationBounds();
     SpawnWorldDirector();
+
+    if (APlayerController* PC = GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr)
+    {
+        if (APawn* Observer = PC->GetPawn())
+        {
+            Observer->SetActorLocation(FVector(0.f, -2800.f, 1700.f), false, nullptr, ETeleportType::TeleportPhysics);
+            Observer->SetActorRotation(FRotator(-24.f, 0.f, 0.f));
+        }
+    }
 }
 
 void ACivVillageGameMode::SpawnRuntimeGround()
