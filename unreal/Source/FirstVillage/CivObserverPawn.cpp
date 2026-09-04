@@ -5,12 +5,20 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/InputComponent.h"
 #include "InputCoreTypes.h"
+#include "GameFramework/FloatingPawnMovement.h"
 
 ACivObserverPawn::ACivObserverPawn()
 {
     PrimaryActorTick.bCanEverTick = true;
     BaseTurnRate = 55.f;
     BaseLookUpRate = 55.f;
+
+    if (UFloatingPawnMovement* Movement = Cast<UFloatingPawnMovement>(GetMovementComponent()))
+    {
+        Movement->MaxSpeed = 850.f;
+        Movement->Acceleration = 2600.f;
+        Movement->Deceleration = 3600.f;
+    }
 }
 
 void ACivObserverPawn::BeginPlay()
