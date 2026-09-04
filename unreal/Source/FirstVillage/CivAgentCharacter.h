@@ -14,12 +14,16 @@ class FIRSTVILLAGE_API ACivAgentCharacter : public ACharacter
 
 public:
     ACivAgentCharacter();
+    virtual void Tick(float DeltaSeconds) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Agent")
     TObjectPtr<UCivAgentMindComponent> Mind;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Agent|Visual")
     TObjectPtr<UStaticMeshComponent> BodyVisual;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent|Needs")
+    float Health = 100.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent|Needs")
     float Hunger = 10.f;
@@ -33,6 +37,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent|Needs")
     float Morale = 80.f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Agent|Needs")
+    float NeedTimeScale = 1.f;
+
     UFUNCTION(BlueprintCallable, Category="Agent")
     void ApplyNeedDelta(float HungerDelta, float ThirstDelta, float FatigueDelta, float MoraleDelta);
+
+    UFUNCTION(BlueprintCallable, Category="Agent")
+    void ApplyHealthDelta(float Delta);
 };
