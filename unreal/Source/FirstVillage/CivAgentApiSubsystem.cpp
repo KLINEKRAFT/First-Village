@@ -3,7 +3,7 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 
-void UCivAgentApiSubsystem::RequestDecision(const FString& ObservationJson)
+void UCivAgentApiSubsystem::RequestDecision(int32 AgentId, const FString& ObservationJson)
 {
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
     Request->SetURL(DecisionEndpoint);
@@ -11,10 +11,10 @@ void UCivAgentApiSubsystem::RequestDecision(const FString& ObservationJson)
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
     Request->SetContentAsString(ObservationJson);
 
-    Request->OnProcessRequestComplete().BindLambda([this](FHttpRequestPtr Req, FHttpResponsePtr Resp, bool bConnectedSuccessfully)
+    Request->OnProcessRequestComplete().BindLambda([this, AgentId](FHttpRequestPtr Req, FHttpResponsePtr Resp, bool bConnectedSuccessfully)
     {
         const bool bOk = bConnectedSuccessfully && Resp.IsValid() && EHttpResponseCodes::IsOk(Resp->GetResponseCode());
-        OnDecisionReceived.Broadcast(bOk, Resp.IsValid() ? Resp->GetContentAsString() : FString());
+        OnDecisionReceived.Broadcast(AgentId, bOk, Resp.IsValid() ? Resp->GetContentAsString() : FString());
     });
 
     Request->ProcessRequest();
