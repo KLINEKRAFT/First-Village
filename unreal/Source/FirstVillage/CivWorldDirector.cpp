@@ -141,13 +141,13 @@ void ACivWorldDirector::SpawnDemoStructures()
         const TCHAR* Name;
         const TCHAR* Purpose;
         FVector2D Footprint;
-        bool Hearth;
+        TArray<FName> Primitives;
     };
 
     const FDemo Demo[] = {
-        { FVector(450.f, 150.f, 0.f), TEXT("First Hut"), TEXT("housing"), FVector2D(500.f, 400.f), false },
-        { FVector(-420.f, 220.f, 0.f), TEXT("Smokehouse"), TEXT("preserve meat"), FVector2D(420.f, 340.f), true },
-        { FVector(0.f, -520.f, 0.f), TEXT("Meeting Shelter"), TEXT("gathering and decisions"), FVector2D(700.f, 520.f), true }
+        { FVector(450.f, 150.f, 0.f), TEXT("First Hut"), TEXT("housing"), FVector2D(8.f, 8.f), { TEXT("walls"), TEXT("roof"), TEXT("posts"), TEXT("doorway") } },
+        { FVector(-420.f, 220.f, 0.f), TEXT("Smokehouse"), TEXT("preserve meat"), FVector2D(8.f, 8.f), { TEXT("walls"), TEXT("roof"), TEXT("hearth"), TEXT("drying_beams"), TEXT("doorway") } },
+        { FVector(0.f, -520.f, 0.f), TEXT("Meeting Shelter"), TEXT("gathering and decisions"), FVector2D(10.f, 8.f), { TEXT("posts"), TEXT("roof"), TEXT("hearth"), TEXT("platform") } }
     };
 
     for (const FDemo& D : Demo)
@@ -158,7 +158,7 @@ void ACivWorldDirector::SpawnDemoStructures()
         Building->Blueprint.Name = D.Name;
         Building->Blueprint.Purpose = D.Purpose;
         Building->Blueprint.Footprint = D.Footprint;
-        Building->Blueprint.bHasHearth = D.Hearth;
+        Building->Blueprint.Primitives = D.Primitives;
         Building->RebuildFromBlueprint();
     }
 }
