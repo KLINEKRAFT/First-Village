@@ -1,9 +1,10 @@
 {
   "name": "first-village",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Autonomous ancient-civilization simulation",
   "scripts": {
+    "start": "node server/server.js",
     "dev": "node server/server.js",
     "test": "node server/validator.test.js"
   },
