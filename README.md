@@ -1,120 +1,151 @@
 # ASTRA // First Village
 
-First Village is an autonomous ancient-civilization simulation: a small hunter-gatherer band enters an unfamiliar valley and, through private knowledge, cooperation, conflict, experimentation, construction, oral tradition, and generations of accumulated experience, can grow into a permanent village and eventually a civilization.
+First Village is an autonomous ancient-civilization simulation. A small hunter-gatherer band enters an unfamiliar valley and, through private knowledge, cooperation, conflict, experimentation, construction, oral tradition and generations of accumulated experience, can grow into a permanent village and eventually a civilization.
 
-## Core design rule
+## Core rule
 
 **Agents choose intentions; the simulation owns reality.**
 
-An agent may want to build, hunt, teach, explore, organize, remember the dead, test an idea, or invent something new. The world validates whether the action is physically possible, whether required materials and techniques exist, and what actually happens.
+An agent can want to hunt, gather, teach, explore, heal, experiment, organize or invent a new building. Unreal validates and executes what is physically possible. The model never receives authority to run arbitrary code, spawn unlimited resources or directly alter world truth.
 
-## Current state
+## Two simulation surfaces
 
-The development branch now contains a runnable browser simulation plus the first shared/Unreal architecture.
+### Browser society lab
 
-The browser prototype models:
+The browser prototype remains the fastest way to test long-running civilization mechanics. It includes private discovery, memory/hearsay, trust, experimentation, creative building ideas, families, births, oral traditions and early institutions.
 
-- autonomous hunter-gatherers with needs, roles, traits and private goals
-- private discovery and personal resource maps
-- person-to-person knowledge transfer
-- trust relationships and emergent leadership
-- memories, hearsay and beliefs
-- gathering, food spoilage, injuries and healing
-- shared material stores
-- experimental technique discovery with failed attempts
-- agent-originated building proposals
-- constrained custom structures such as smokehouses, fish weirs and storage pits
-- physical village growth on the map
-- families, households and second-generation births
-- oral traditions and early institutions
-- farming, storage, weather and demographic pressure
-- browser save state
-- observer view for hidden social/cultural state
+After `npm start`, open:
 
-Open `web/index.html` directly for the local-brain simulation.
+`http://localhost:8787/sim`
 
-## Agent-created buildings
+### Unreal Engine 3D world
 
-The long-term system does not restrict agents to a fixed menu of buildings. An AI agent may propose a constrained blueprint:
+`unreal/FirstVillage.uproject` is now a real C++ Unreal project.
+
+The current 3D runtime generates:
+
+- a rolling valley terrain at runtime, including a central basin and shallow river corridor
+- sunlight, skylight, fog and dynamic navigation
+- a flyable observer pawn
+- 12 embodied people with private identities, memories, known facts and relationships
+- health, hunger, thirst, fatigue and morale
+- physical water, food, wood, stone, clay and game resource nodes
+- authoritative communal food/water/material stores
+- physical gathering: walk to resource -> harvest -> carry back -> deposit
+- person-to-person talk, teaching and healing actions
+- local survival fallback behavior if the agent backend is unavailable
+- procedural 3D buildings assembled from validated primitive blueprints
+- starter hut, smokehouse and meeting shelter
+- an Unreal HTTP subsystem that talks to the same `/api/decide` endpoint as the browser architecture
+
+See `docs/UNREAL-TESTING.md` for the full first-run guide.
+
+## GPT-6 Astra cognition
+
+The Node bridge can use OpenAI's GPT-6 Astra through the Responses API when `OPENAI_API_KEY` is set. Without a key it uses a deterministic local fallback, so the project remains testable without API spend.
+
+The server requests strict structured output matching `shared/agent-decision.schema.json`. A decision looks like:
 
 ```json
 {
   "action": "build",
+  "target_id": null,
+  "resource": null,
+  "utterance": null,
+  "reason": "Hunted meat is spoiling faster than we can eat it.",
   "blueprint": {
     "name": "Smokehouse",
-    "purpose": "preserve surplus meat",
-    "footprint": {"w": 32, "h": 26},
-    "materials": {"wood": 12, "stone": 5, "thatch": 4},
+    "purpose": "Preserve surplus meat",
+    "footprint": {"w": 8, "h": 8},
+    "materials": {"wood": 12, "stone": 5, "thatch": 4, "clay": 0},
     "primitives": ["walls", "roof", "hearth", "drying_beams"]
-  },
-  "reason": "Too much hunted meat is spoiling before we can eat it."
+  }
 }
 ```
 
-A deterministic validator checks materials, known techniques, footprint bounds and allowed construction primitives. Unreal will additionally validate terrain, collision, site access and physical assembly.
+The backend validates the response. Unreal validates it again against the settlement's actual stores, known techniques and supported construction primitives before consuming materials and creating anything.
 
-Successful custom buildings can become part of the settlement's architectural tradition and later be copied by other builders.
+## Creative building system
 
-## Technology and culture
+Agents are not permanently restricted to a menu of predefined building names. They may propose new structures using a constrained architectural vocabulary:
 
-There is no requirement that Day 50 unlock farming or Day 100 unlock masonry. Techniques are intended to emerge from experiments conditioned by need, available materials, prior observations, skill and luck.
+- walls
+- roof
+- posts
+- hearth
+- storage bins
+- drying beams
+- fence
+- pit
+- platform
+- channel
+- doorway
+- work surface
 
-Founders have firsthand memories. Later generations do not. Historical information can therefore evolve from event → memory → retelling → oral tradition → ritual or myth.
+This means an agent can eventually originate a smokehouse, storage pit, fish-processing shelter, workshop, ritual structure or other plausible village architecture while the simulation remains deterministic and safe.
 
-See `docs/CIVILIZATION-MODEL.md` for the full design.
+## Running the local backend
 
-## Repository layout
-
-- `web/` — browser simulation and observer UI
-- `server/` — provider-neutral AI decision bridge and validators
-- `shared/agent-decision.schema.json` — shared structured decision contract
-- `docs/ARCHITECTURE.md` — simulation and Unreal architecture
-- `docs/AGENT-CONTRACT.md` — private observation/action contract
-- `docs/CIVILIZATION-MODEL.md` — knowledge, experimentation, generations and institutions
-- `unreal/Source/FirstVillage/` — initial UE5 C++ components and creative-building validator
-
-## Running locally
-
-The local browser brain needs no API provider:
-
-```bash
-open web/index.html
-```
-
-For the development agent bridge:
+Requires Node.js 18+.
 
 ```bash
 npm install
 npm test
-npm run dev
+npm start
 ```
 
-The API exposes:
+Useful endpoints:
 
 - `GET /health`
 - `POST /api/decide`
 - `POST /api/blueprint/validate`
+- `GET /sim`
 
-Never expose an Astra/model-provider credential in browser code. Browser or Unreal → First Village backend → agent provider.
+To enable Astra, set the API key in your terminal; never commit it:
 
-## Unreal target
+```bash
+export OPENAI_API_KEY="YOUR_KEY_HERE"
+export OPENAI_MODEL="gpt-6-astra"
+npm start
+```
 
-The browser and Unreal versions share the same observation/action philosophy. Unreal owns navigation, animation, physics, terrain, Smart Objects, StateTrees, resources, procedural construction and authoritative world state. Astra-powered agents own higher-level cognition, memory, communication, social reasoning and plans.
+See `.env.example` for optional settings.
 
-Initial UE5 source now includes:
+## Unreal project
 
-- `UCivAgentMindComponent` — identity, private memories, trust and known facts
-- `UCivBuildingValidator` — bounded blueprint/material/technique validation
-- `FirstVillage.Build.cs` — module dependencies for JSON, AI and navigation
+Recommended current target: Unreal Engine 5.8. The build targets use the engine's `Latest` build/include settings instead of pinning the repository to one older UE5 minor release.
 
-## Next milestones
+Open:
 
-1. Connect `/api/decide` to the chosen Astra/model provider with strict structured output.
-2. Move browser cognition behind the same observation/action adapter used by Unreal.
-3. Add conflict, exchange, possession norms and resource claims.
-4. Add experiment histories so failed ideas can be remembered and iterated on.
-5. Add procedural Unreal building assembly from validated primitives.
-6. Create a UE5 valley test map with twelve embodied agents and Smart Objects.
-7. Run long multi-generation simulations and preserve settlement histories for replay/analysis.
+`unreal/FirstVillage.uproject`
 
-The objective is not a conventional colony game with scripted NPCs. The objective is to create a world where a synthetic society develops its own built environment, institutions, traditions and history.
+Create an Empty/Basic level, allow Unreal to build the C++ modules, and press Play. `CivVillageGameMode` creates the simulation world at runtime, so no large binary map asset is required for this engineering milestone.
+
+## Repository layout
+
+- `web/` — browser civilization simulation and observer UI
+- `server/` — Astra/local decision bridge and validators
+- `shared/agent-decision.schema.json` — strict cross-runtime action contract
+- `docs/` — architecture, civilization model and testing guides
+- `unreal/` — UE5 project, world generation, embodied agents, resources, navigation and procedural construction
+
+## Civilization architecture
+
+The long-term information path is:
+
+`world truth -> perception -> private memory/belief -> Astra intention -> validated Unreal action -> experienced consequence -> social transmission -> tradition/institution`
+
+Founders can have firsthand memories. Descendants should inherit stories rather than magically inheriting world truth. Failed experiments should remain historical information that later people can reinterpret and improve.
+
+## Next 3D milestones
+
+1. Compile and play this branch in UE5 and fix any editor/toolchain-specific C++ issues.
+2. Replace primitive humans with animated ancient-human characters.
+3. Add PCG vegetation, trees, rocks, real water and animal actors.
+4. Add task animation / Smart Objects for gathering, hearths, workbenches and building sites.
+5. Port experimentation, households, births, oral tradition and institutions from the browser model into the authoritative Unreal world.
+6. Add day/night, seasons, weather, disease and injury risk.
+7. Add an observer HUD and historical replay/timeline.
+8. Run multi-generation settlements where architecture, traditions and techniques are generated by the agents themselves.
+
+The objective is not a conventional colony game with scripted NPCs. The objective is a synthetic ancient society that develops its own built environment, knowledge, institutions and history.
