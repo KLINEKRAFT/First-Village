@@ -4,6 +4,8 @@
 #include "CivAIController.h"
 #include "CivResourceNode.h"
 #include "CivProceduralBuilding.h"
+#include "CivRuntimeEnvironment.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 
 ACivWorldDirector::ACivWorldDirector()
@@ -24,17 +26,21 @@ void ACivWorldDirector::BeginPlay()
 
 FVector ACivWorldDirector::ProjectToGround(const FVector& DesiredLocation, float HeightOffset) const
 {
-    UWorld* World = GetWorld();
-    if (!World) return DesiredLocation;
-
-    FHitResult Hit;
-    const FVector Start(DesiredLocation.X, DesiredLocation.Y, 5000.f);
-    const FVector End(DesiredLocation.X, DesiredLocation.Y, -5000.f);
-    FCollisionQueryParams Params(SCENE_QUERY_STAT(FirstVillageGroundTrace), false, this);
-
-    if (World->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldStatic, Params))
+    if (UWorld* World = GetWorld())
     {
-        return Hit.ImpactPoint + FVector(0.f, 0.f, HeightOffset);
+        if (ACivRuntimeEnvironment* Environment = Cast<ACivRuntimeEnvironment>(UGameplayStatics::GetActorOfClass(World, ACivRuntimeEnvironment::StaticClass())))
+        {
+            return FVector(DesiredLocation.X, DesiredLocation.Y, Environment->GetTerrainZAtWorldXY(DesiredLocation.X, DesiredLocation.Y) + HeightOffset);
+        }
+
+        FHitResult Hit;
+        const FVector Start(DesiredLocation.X, DesiredLocation.Y, 5000.f);
+        const FVector End(DesiredLocation.X, DesiredLocation.Y, -5000.f);
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(FirstVillageGroundTrace), false, this);
+        if (World->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldStatic, Params))
+        {
+            return Hit.ImpactPoint + FVector(0.f, 0.f, HeightOffset);
+        }
     }
 
     return DesiredLocation;
