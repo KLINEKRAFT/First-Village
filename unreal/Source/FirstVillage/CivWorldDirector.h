@@ -38,4 +38,5 @@ private:
     void SpawnInitialPopulation();
     void SpawnResourceRing();
     void SpawnDemoStructures();
+    FVector ProjectToGround(const FVector& DesiredLocation, float HeightOffset = 0.f) const;
 };
